@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.bookStore.client.order.dao.IOrderDao">
+    <insert id="insertOrderByForEach">
+        insert into orders
+        (id, money, receiverAddress, receiverName,receiverPhone,user_id)
+        values (#{id}, #{money}, #{receiverAddress}, #{receiverName},#{receiverPhone},#{user_id});
+
+        insert into orderitem
+        (order_id,product_id,buynum)
+        values
+        <foreach collection="orderitems" item="orderitem" separator="," close=";">
+            (#{orderitem.order_id},#{orderitem.product_id},#{orderitem.buynum})
+        </foreach>
+
+    </insert>
+    <insert id="insertOrder">
+         insert into orders
+        (id, money, receiverAddress, receiverName,receiverPhone,user_id)
+        values (#{id}, #{money}, #{receiverAddress}, #{receiverName},#{receiverPhone},#{user_id})
+    </insert>
+    <insert id="insertOrderItem">
+        insert into orderitem
+        (order_id,product_id,buynum)
+        values
+            (#{order_id},#{product_id},#{buynum})
+    </insert>
+    <update id="changeProductNum">
+        update products set
+        pnum=pnum-#{buynum}
+        where id=#{product_id}
+    </update>
+
+
+    <select id="selectProductByProductId" resultType="Product">
+        select *
+        from products
+        where id=#{product_id}
+    </select>
+
+    <resultMap id="selectProductByProductIdMap" type="Orderitem">
+        <id column="product_id" property="product_id" javaType="String"/>
+        <association property="product" column="product_id" javaType="Product" select="selectProductByProductId"/>
+    </resultMap>
+
+    <select id="selectOrderItemeByUserId" parameterType="String" resultMap="selectProductByProductIdMap" resultType="Orderitem">
+        select *
+        from orderitem
+        where order_id=#{id}
+    </select>
+
+    <resultMap id="selectOrderByOrderIdMap" type="Order">
+        <id column="id" property="id" javaType="String"/>
+        <collection property="orderitems" column="id"  select="selectOrderItemeByUserId" ofType="Orderitem">
+        </collection>
+    </resultMap>
+
+
+    <select id="selectOrderByOrderId" resultMap="selectOrderByOrderIdMap">
+        select * from
+        orders
+        where id=#{id}
+    </select>
+
+    <update id="updateOrderStatus">
+        update orders set paystate = 1 where id=#{id};
+    </update>
+    <select id="selectOrderByUser" parameterType="User" resultType="Order">
+        select id,receiverName, DATE_FORMAT(ordertime,'%Y-%m-%d %H:%i:%s') ordertime ,paystate
+        from orders
+        where user_id=#{user.id}
+        limit #{pageModel.firstLimitParam},#{pageModel.pageSize}
+    </select>
+    <select id="findOrderCountByUser" resultType="int">
+        select count(*)
+        from orders
+        where user_id=#{id}
+    </select>
+    <delete id="deleteOrderByOrderId">
+        delete from Orders
+        where id=#{id}
+    </delete>
+    <update id="changeProductNumberByItem">
+        update products
+        set pnum=pnum+#{buynum}
+        where id=#{product_id}
+    </update>
+</mapper>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.bookStore.client.product.dao.IProductDao">
+    <select id="selectProductByCategory" resultType="Product">
+        select * from bookstore.products
+        <where>
+            <if test="category!=null and category!=''">
+                category=#{category}
+            </if>
+        </where>
+        limit #{pageModel.firstLimitParam},#{pageModel.pageSize}
+    </select>
+    <select id="selectProductCountByCategory" resultType="int">
+        select count(*) from bookstore.products
+        <where>
+            <if test="category!=null and category!=''">
+                category=#{category}
+            </if>
+        </where>
+    </select>
+    <select id="selectProductCountByName" resultType="int">
+        select count(*) from bookstore.products
+        <if test="name!=null and name!='' and name!='请输入书名'">
+            where name like "%"#{name}"%"
+        </if>
+    </select>
+    <select id="selectProductByName" resultType="Product">
+        select * from bookstore.products
+
+        <if test="name!=null and name!='' and name!='请输入书名'">
+            where name like "%"#{name}"%"
+        </if>
+        limit #{pageModel.firstLimitParam},#{pageModel.pageSize}
+    </select>
+    <select id="selectProductById" resultType="Product">
+        select * from bookstore.products
+        where id=#{id}
+
+    </select>
+    <select id="selectNotice" resultType="Notice">
+        select * from notice
+        order by n_time
+        limit 0,1
+    </select>
+    <resultMap id="selectProductMap" type="Product">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="imgurl" property="imgurl"/>
+    </resultMap>
+    <select id="selectHotProducts" resultMap="selectProductMap">
+        select
+            products.id,products.name,products.imgurl,sum(orderitem.buynum) totalsalnum
+        from
+            orders,products,orderitem
+		where
+            orders.id=orderitem.order_id and orderitem.product_id=products.id and
+            YEARWEEK(DATE_FORMAT(ordertime,'%Y-%m-%d'))=YEARWEEK(NOW()) and
+            paystate=1
+		group by products.id,products.name,products.imgurl
+		order by totalsalnum desc
+        limit 0,2
+    </select>
+</mapper>

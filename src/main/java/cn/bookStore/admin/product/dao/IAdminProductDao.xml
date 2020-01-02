@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.bookStore.admin.product.dao.IAdminProductDao">
+    <select id="selectProduct" resultType="Product">
+        select * from bookstore.products
+        <where>
+            <if test="product.category!=null and product.category!=''">
+                category=#{product.category}
+            </if>
+            <if test="product.id!=null and product.id!=''">
+                and id=#{product.id}
+            </if>
+            <if test="product.name!=null and product.name!=''">
+                and name like "%"#{product.name}"%"
+            </if>
+            <if test="minPrice!=null and minPrice!=''">
+                and price <![CDATA[>=]]> #{minPrice}
+            </if>
+            <if test="maxPrice!=null and maxPrice!=''">
+                and price <![CDATA[<=]]> #{maxPrice}
+            </if>
+
+        </where>
+        limit #{pageModel.firstLimitParam},#{pageModel.pageSize}
+    </select>
+    <select id="selectProductCount" resultType="int">
+        select count(*) from bookstore.products
+        <where>
+            <if test="product.category!=null and product.category!=''">
+                category=#{product.category}
+            </if>
+            <if test="product.id!=null and product.id!=''">
+                and id=#{product.id}
+            </if>
+            <if test="product.name!=null and product.name!=''">
+                and name like "%"#{product.name}"%"
+            </if>
+            <if test="minPrice!=null and minPrice!=''">
+                and price <![CDATA[>=]]> #{minPrice}
+            </if>
+            <if test="maxPrice!=null and maxPrice!=''">
+                and price <![CDATA[<=]]> #{maxPrice}
+            </if>
+
+        </where>
+    </select>
+    <select id="selectProductById" resultType="Product">
+        select * from bookstore.products
+        where id=#{id}
+    </select>
+    <update id="updateProductById">
+        update products set name=#{name},
+        price=#{price},
+        category=#{category},
+        pnum=#{pnum},
+        <if test="imgurl!=null">
+            imgurl=#{imgurl},
+        </if>
+
+        description=#{description}
+        where id=#{id};
+    </update>
+
+    <insert id="insertProduct">
+        insert into bookstore.products (id,name,price,category,pnum,imgurl,description)
+        values (#{id},#{name},#{price},#{category},#{pnum},#{imgurl},#{description});
+    </insert>
+    <delete id="deleteProduct">
+        delete from bookstore.products
+        where id=#{id}
+    </delete>
+    <select id="selectProductList" resultType="ProductList">
+        select
+            products.name name,sum(orderitem.buynum) saleNum
+        from
+            orders,products,orderitem
+		where
+            orders.id=orderitem.order_id and orderitem.product_id=products.id and
+            year(ordertime)=#{year} and
+            month(ordertime)=#{month} and
+            paystate=1
+		group by products.id,products.name,products.imgurl
+		order by saleNum desc
+
+    </select>
+</mapper>

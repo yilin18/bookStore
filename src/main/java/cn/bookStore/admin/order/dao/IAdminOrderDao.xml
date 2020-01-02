@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.bookStore.admin.order.dao.IAdminOrderDao">
+    <select id="findUserById" resultType="User">
+        select * from user
+        where id=#{id}
+    </select>
+    <resultMap id="findUserByOrderMap" type="Order">
+        <id column="id" property="id"/>
+        <association property="user" column="user_id" select="findUserById" javaType="User"/>
+    </resultMap>
+    <select id="selectOrder" resultMap="findUserByOrderMap">
+        select * from bookstore.orders
+        <where>
+            <if test="order.id!=null and order.id!=''">
+                id like "%"#{order.id}"%"
+            </if>
+            <if test="order.receiverName!=null and order.receiverName!=''">
+                and receiverName like "%"#{order.receiverName}"%"
+            </if>
+        </where>
+        limit #{pageModel.firstLimitParam},#{pageModel.pageSize}
+    </select>
+    <select id="selectOrderCount" resultType="int">
+        select count(*) from bookstore.orders
+        <where>
+            <if test="order.id!=null and order.id!=''">
+                id like "%"#{order.id}"%"
+            </if>
+            <if test="order.receiverName!=null and order.receiverName!=''">
+                and receiverName like "%"#{order.receiverName}"%"
+            </if>
+        </where>
+    </select>
+
+
+    <select id="findProductById" resultType="Product">
+        select * from products
+        where id=#{product_id}
+    </select>
+    <resultMap id="findOrderitemByOrderId" type="Orderitem">
+        <id column="product_id" property="product_id" javaType="String"/>
+        <association property="product" column="product_id" javaType="Product" select="findProductById"/>
+    </resultMap>
+    <select id="findOrderItem" resultMap="findOrderitemByOrderId">
+        select * from bookstore.orderitem
+        where order_id=#{id}
+    </select>
+
+    <resultMap id="findOrderByIdMap" type="Order">
+        <id column="id" property="id"/>
+        <result property="user_id" column="user_id"/>
+        <association property="user" column="user_id" select="findUserById" javaType="User"/>
+        <collection property="orderitems" column="id" select="findOrderItem" ofType="Orderitem">
+        </collection>
+    </resultMap>
+    <select id="selectOrderById" resultMap="findOrderByIdMap">
+        select * from bookstore.orders
+        where id=#{id}
+    </select>
+
+    <delete id="deleteOrderById">
+        delete from bookstore.orders
+        where id=#{id}
+    </delete>
+</mapper>
